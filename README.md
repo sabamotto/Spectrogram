@@ -1,3 +1,5 @@
+![Example Screenshot](https://github.com/sabamotto/Spectrogram/raw/example/spectrogram-example.png)
+
 # Spectrogram
 The Spectrogram Analyzer with Processing3 and Minim.
 It has 2 graph sockets for comparison with another sound.
