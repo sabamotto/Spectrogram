@@ -17,19 +17,22 @@ Other way, you can use your audio input device for pressing 'M' key.
 ## Key control
 - File
  * O : Open a file into current graph socket
- * M : Open an audio input device
+ * I : Open an audio input device
 - Graph
  * 1 : Change Graph-1
  * 2 : Change Graph-2. If it's empty, then open a file
 - Player
  * Return/Enter : Pause or Play
+ * M : Mute / Unmute
  * R : Replay -- Seek to first position
  * ← : Move backward
  * → : Move forward
 - Spectrogram
- * I : Enable/Disable Lanczos-3 Interpolation
- * F : Change Linear/Log-scale for Frequency-axis
- * P : Change Linear/dB for Power
+ * Z : Enable/Disable Lanczos-3 Interpolation
+ * X : Change Linear/Log-scale for Frequency-axis
+ * C : Change Linear/dB for Power
+- Help
+ * Others : Display key control help for 5 secs
 
 ## Author
 @sabamotto
