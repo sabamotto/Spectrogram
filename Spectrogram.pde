@@ -87,7 +87,6 @@ void selectAudioInput() {
 
 void draw() {
   SpectrumStream stream = streams[tgt];
-  SD s = (SD) stream.struct;
   
   drawStatus();
   
