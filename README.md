@@ -12,7 +12,7 @@ It has 2 graph sockets for comparison with another sound.
 ## How to use
 First, choose your wav(PCM) or mp3 audio file.
 If any errors occurred, you should convert it.
-Other way, you can use your audio input device for pressing 'M' key.
+Another way, you can use your audio input device with pressing 'M' key.
 
 ## Key control
 - File
