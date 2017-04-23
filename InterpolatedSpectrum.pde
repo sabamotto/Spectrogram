@@ -23,13 +23,15 @@ class InterpolatedSpectrum {
     // calculate an integrated window function
     float[] wbuf = new float[fft.timeSize()];
     for (int i = 0; i < fft.timeSize(); ++i) wbuf[i] = 1f;
-    fft.forward(wbuf);
-    fft.inverse(wbuf);
+    FFT wfft = new FFT(fft.timeSize(), 44100);
+    wfft.forward(wbuf);
+    wfft.inverse(wbuf);
     this.maxPower = 0f;
     for (int i = 0; i < fft.timeSize(); ++i) this.maxPower += wbuf[i];
   }
   
-  public void load() {
+  public void load(FFT fft) {
+    if (this.fft != fft) this.setFFT(fft);
     for (int i = 0; i < this.specSize; ++i) spectrum[i] = fft.getBand(i);
   }
   
