@@ -94,6 +94,19 @@ class SpectrumStream {
     lastPosition = 0;
   }
   
+  void mute() {
+    if (player != null)
+      player.mute();
+    else if (in != null)
+      in.mute();
+  }
+  void unmute() {
+    if (player != null)
+      player.unmute();
+    else if (in != null)
+      in.unmute();
+  }
+  
   void seekRelative(int offset) {
     if (player == null) return;
 
@@ -149,6 +162,15 @@ class SpectrumStream {
       return player.isPlaying();
     else if (in != null)
       return in.isMonitoring();
+    else
+      return false;
+  }
+  
+  boolean isMuted() {
+    if (player != null)
+      return player.isMuted();
+    else if (in != null)
+      return in.isMuted();
     else
       return false;
   }

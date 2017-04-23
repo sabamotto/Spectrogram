@@ -30,7 +30,7 @@ class SD implements StreamStruct {
 }
 
 void setup() {
-  size(1024, 640, P3D);
+  size(1200, 640, P3D);
   colorMode(HSB, 360, 100, 100);
   background(0);
   frameRate(30);
@@ -81,6 +81,8 @@ void selectAudioInput() {
   stream.close();
   stream.initInput();
   stream.struct = new SD();
+  
+  is.setFFT(stream.getFFT());
 }
 
 void draw() {
@@ -168,9 +170,9 @@ void drawStatus() {
       , 8, height-8);
   } else {
     text(
-      "Keys: [O]pen File (to Graph[1] or [2]), [R]eplay"+
-      ", [↵]Pause/Play, [←]Move Backward, [→]Move Forward"+
-      ", Change [I]nterpolation, Change Linear/Log-scale for [F]req./[P]ower"
+      "Keys: [O]pen File (to Graph[1] or [2]), Open [I]nput, [R]eplay"+
+      ", [↵]Pause/Play, [M]ute, [←]Move Backward, [→]Move Forward"+
+      ", Change [Z]Interpolation, Change Linear/Log-scale for [X]Freq./[C]Power"
       , 8, height-8);
   }
 }
@@ -180,7 +182,7 @@ void keyPressed() {
   
   boolean keyChecked = true;
   if (key == 'o' || key == 'O') selectSound();
-  else if (key == 'm' || key == 'M') selectAudioInput();
+  else if (key == 'i' || key == 'I') selectAudioInput();
   else if (key == '1') {
     stream.stop(); tgt = 0;
     if (!streams[tgt].isInitialized()) selectSound();
@@ -193,15 +195,18 @@ void keyPressed() {
   if (!stream.isInitialized()) return;
   
   if (key == 'r' || key == 'R') stream.restart();
+  else if (key == 'm' || key == 'M')
+    if (stream.isMuted()) stream.unmute();
+    else stream.mute();
   else if (keyCode == RETURN || keyCode == ENTER) {
     if (stream.isStreaming()) stream.stop();
     else stream.start();
   } else if (keyCode == LEFT) stream.seekRelative(-2000);
   else if (keyCode == RIGHT) stream.seekRelative(1000);
   
-  else if (key == 'i' || key == 'I') is.interpolation = !is.interpolation;
-  else if (key == 'f' || key == 'F') is.logScaleFreq = !is.logScaleFreq;
-  else if (key == 'p' || key == 'P') is.logScalePower = !is.logScalePower;
+  else if (key == 'z' || key == 'Z') is.interpolation = !is.interpolation;
+  else if (key == 'x' || key == 'X') is.logScaleFreq = !is.logScaleFreq;
+  else if (key == 'c' || key == 'C') is.logScalePower = !is.logScalePower;
   
   else if (!keyChecked) {
     if (helpTime > 0) helpTime = 0;
