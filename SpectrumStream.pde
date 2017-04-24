@@ -56,19 +56,29 @@ class SpectrumStream {
   }
   
   void start() {
-    if (player != null)
+    if (player != null) {
       player.play();
-    else if (in != null)
-      in.enableMonitoring();
-    else
+    } else if (in != null) {
+      if (!in.isMonitoring()) {
+        int currentMillis = millis();
+        previousPosition += currentMillis - lastPosition;
+        lastPosition = currentMillis;
+        in.enableMonitoring();
+      }
+    } else {
       println("warning: stream is not initialized");
+    }
   }
   
   void restart() {
-    if (player != null)
+    if (player != null) {
       player.play(0);
-    else
+    } else if (in != null) {
+      previousPosition = lastPosition = millis();
+      in.enableMonitoring();
+    } else {
       this.start();
+    }
   }
   
   void stop() {
@@ -121,7 +131,7 @@ class SpectrumStream {
       return player.position();
     } else if (in != null) {
       if (in.isMonitoring()) return millis() - previousPosition;
-      else return lastPosition;
+      else return lastPosition - previousPosition;
     } else {
       return 0;
     }
