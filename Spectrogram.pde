@@ -233,6 +233,7 @@ void keyPressed() {
       break;
     case '<': stream.seekRelative(-2000); break;
     case '>': stream.seekRelative(1000); break;
+    
     case '+':
       is.coefPower += .1;
       if (is.coefPower > 3f) is.coefPower = 3f;
@@ -241,7 +242,6 @@ void keyPressed() {
       is.coefPower -= .1;
       if (is.coefPower < .1) is.coefPower = .1;
       break;
-    
     case 'Z': is.interpolation = !is.interpolation; break;
     case 'X': is.logScaleFreq = !is.logScaleFreq; break;
     case 'C': is.logScalePower = !is.logScalePower; break;
