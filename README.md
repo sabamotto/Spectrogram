@@ -25,9 +25,11 @@ Another way, you can use your audio input device with pressing 'M' key.
   * Return/Enter : Pause or Play
   * M : Mute / Unmute
   * R : Replay -- Seek to first position
-  * ← : Move backward
-  * → : Move forward
+  * ←, < : Move backward for 2 secs
+  * →, > : Move forward for 1 sec
 - Spectrogram
+  * ↑, + : Increase spectrum gain by 10%
+  * ↓, - : Decrease spectrum gain by 10%
   * Z : Enable/Disable Lanczos-3 Interpolation
   * X : Change Linear/Log-scale for Frequency-axis
   * C : Change Linear/dB for Power
