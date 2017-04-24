@@ -42,7 +42,7 @@ class SD implements StreamStruct {
 }
 
 void setup() {
-  size(1200, 640, P3D);
+  size(1200, 800, P3D);
   colorMode(HSB, 360, 100, 100);
   background(0);
   frameRate(30);
@@ -174,7 +174,7 @@ void drawStatus() {
   fill(0);
   rect(0,height-32, width,height);
   fill(240);
-  if (stream.isInitialized() && millis() - helpTime >= 5000) {
+  if (stream.isInitialized() && is.fft != null && millis() - helpTime >= 5000) {
     helpTime = 0;
     text(
       "Graph"+(graph+1)+
