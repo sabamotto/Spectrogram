@@ -1,19 +1,25 @@
 /**
- * 2-sockets Spectrogram Analyzer
+ * 2-graphs Spectrogram Analyzer
  * Copyright(c) 2013-2017 SabaMotto.
  */
 
 import ddf.minim.*;
 import ddf.minim.analysis.*;
-import ddf.minim.effects.*;
 
-static int WINDOW_SIZE = 1024;
+// Window Function Size for FFT
+static int WINDOW_SIZE = 2048;//1024;
+
+// Statusbar Height
+static int STATUS_HEIGHT = 32;
+
+// Brightness Coefficient (100:full-scale)
+static float BRIGHTNESS_COEF = 180;
 
 Minim minim;
 InterpolatedSpectrum is;
 
 SpectrumStream[] streams = new SpectrumStream[2];
-int tgt = 0;
+int graph = 0;
 
 int helpTime = 0;
 boolean autoplay = false;
@@ -21,12 +27,18 @@ boolean autoplay = false;
 class SD implements StreamStruct {
   int time = -1;
   
-  float maxPeek = 0;
-  float maxFreq = 0;
+  float maxPeek = 0f;
+  float maxFreq = 0f;
   
   float maxPeek500ms = 0f;
-  float maxFreq500ms = 0;
+  float maxFreq500ms = 0f;
   int maxPos500ms = 0;
+  
+  color[] spectrum;
+  
+  SD() {
+    this.spectrum = new color[(height - STATUS_HEIGHT)/2];
+  }
 }
 
 void setup() {
@@ -51,11 +63,11 @@ void setup() {
   is.interpolation = true;
   is.interpolateRange = 0.5f;
   
-  selectSound();
+  selectAudioFile();
 }
 
-void selectSound() {
-  streams[tgt].stop();
+void selectAudioFile() {
+  streams[graph].stop();
   selectInput("Please choose your wav(PCM) or mp3 file", "fileSelected");
 }
 
@@ -63,7 +75,7 @@ void fileSelected(File selection) {
   if (selection == null) return;
   
   String file = selection.getAbsolutePath();
-  SpectrumStream stream = streams[tgt];
+  SpectrumStream stream = streams[graph];
   
   stream.close();
   stream.initFile(file);
@@ -76,7 +88,7 @@ void fileSelected(File selection) {
 }
 
 void selectAudioInput() {
-  SpectrumStream stream = streams[tgt];
+  SpectrumStream stream = streams[graph];
   
   stream.close();
   stream.initInput();
@@ -86,7 +98,7 @@ void selectAudioInput() {
 }
 
 void draw() {
-  SpectrumStream stream = streams[tgt];
+  SpectrumStream stream = streams[graph];
   
   drawStatus();
   
@@ -97,23 +109,31 @@ void draw() {
 }
 
 void drawSpectrogram() {
-  SpectrumStream stream = streams[tgt];
+  SpectrumStream stream = streams[graph];
   SD s = (SD) stream.struct;
   
   is.load(stream.getFFT());
   
   int shei = (height-32)/2;
   s.maxFreq = s.maxPeek = 0f;
-  stroke(0); line(0.5f+s.time, shei*tgt, 0.5f+s.time, shei*(tgt+1));
+  stroke(0); line(0.5f+s.time, shei*graph, 0.5f+s.time, shei*(graph+1));
   for (int i = 0; i < shei; ++i)
   {
     float freqRatio = (float)(i) / shei;
     float freqIndex = is.getIndex(freqRatio);
     float power = is.getPower(freqIndex);
+    // MEMO: Strictly calculation, it should be an integrated power
     
-    color c = color(max(0, 360*power*power), 100, 200*power);
-    set(s.time, shei*(tgt+1)-i, c);
-    set(s.time+1, shei*(tgt+1)-i, c);
+    color c = color(max(0, 360*power*power), 100, BRIGHTNESS_COEF*power);
+    if (is.interpolation) {
+      // Linear interpolation
+      set(s.time, shei*(graph+1)-i, lerpColor(s.spectrum[i], c, .5));
+    } else {
+      set(s.time, shei*(graph+1)-i, c);
+    }
+    set(s.time+1, shei*(graph+1)-i, c);
+    
+    s.spectrum[i] = c;
     
     if (s.maxPeek < power) {
       s.maxFreq = freqIndex;
@@ -128,7 +148,7 @@ void drawSpectrogram() {
   }
   
   s.time+=2; if (s.time >= width) s.time = 0;
-  stroke(255); line(0.5f+s.time, shei*tgt, 0.5f+s.time, shei*(tgt+1));
+  stroke(255); line(0.5f+s.time, shei*graph, 0.5f+s.time, shei*(graph+1));
   
   line(0, shei, width, shei);
   line(0, shei*2, width, shei*2);
@@ -147,19 +167,19 @@ void drawSpectrogram() {
 }
 
 void drawStatus() {
+  SpectrumStream stream = streams[graph];
+  SD s = (SD) stream.struct;
+  
   noStroke();
   fill(0);
   rect(0,height-32, width,height);
   fill(240);
-  if (millis() - helpTime >= 5000) {
-    SpectrumStream stream = streams[tgt];
-    SD s = (SD) stream.struct;
-    
+  if (stream.isInitialized() && millis() - helpTime >= 5000) {
     helpTime = 0;
-    if (!stream.isInitialized()) return;
     text(
-      "Graph"+(tgt+1)+
+      "Graph"+(graph+1)+
       "  Sf="+stream.sampleRate()+
+      "  Gain="+nf(is.coefPower, 1, 1)+
       ", WindowWidth="+floor(stream.windowSize)+
       ", Time="+nfc(stream.position())+"ms"+
       ", Peek="+nfs(is.dbPower(s.maxPeek), 2, 3)+"dB"+
@@ -177,39 +197,58 @@ void drawStatus() {
 }
 
 void keyPressed() {
-  SpectrumStream stream = streams[tgt];
+  SpectrumStream stream = streams[graph];
+  SD s = (SD) stream.struct;
   
-  boolean keyChecked = true;
-  if (key == 'o' || key == 'O') selectSound();
-  else if (key == 'i' || key == 'I') selectAudioInput();
-  else if (key == '1') {
-    stream.stop(); tgt = 0;
-    if (!streams[tgt].isInitialized()) selectSound();
-  } else if (key == '2') {
-    stream.stop(); tgt = 1;
-    if (!streams[tgt].isInitialized()) selectSound();
-  } else
-    keyChecked = false;
+  int roundedKey = key;
+  if ('a' <= roundedKey && roundedKey <= 'z') roundedKey -= 'a' - 'A';
+  switch (keyCode) {
+    case RETURN: case ENTER: roundedKey = '\n'; break;
+    case LEFT:  roundedKey = '<'; break;
+    case RIGHT: roundedKey = '>'; break;
+    case UP:    roundedKey = '+'; break;
+    case DOWN:  roundedKey = '-'; break;
+  }
   
-  if (!stream.isInitialized()) return;
-  
-  if (key == 'r' || key == 'R') stream.restart();
-  else if (key == 'm' || key == 'M')
-    if (stream.isMuted()) stream.unmute();
-    else stream.mute();
-  else if (keyCode == RETURN || keyCode == ENTER) {
-    if (stream.isStreaming()) stream.stop();
-    else stream.start();
-  } else if (keyCode == LEFT) stream.seekRelative(-2000);
-  else if (keyCode == RIGHT) stream.seekRelative(1000);
-  
-  else if (key == 'z' || key == 'Z') is.interpolation = !is.interpolation;
-  else if (key == 'x' || key == 'X') is.logScaleFreq = !is.logScaleFreq;
-  else if (key == 'c' || key == 'C') is.logScalePower = !is.logScalePower;
-  
-  else if (!keyChecked) {
-    if (helpTime > 0) helpTime = 0;
-    else helpTime = millis();
+  switch (roundedKey) {
+    case 'O': selectAudioFile(); break;
+    case 'I': selectAudioInput(); break;
+    
+    case '1': case '2':
+      stream.stop();
+      // change the target graph (mapping: 1~2 keys to 0~1)
+      graph = roundedKey - '1';
+      
+      if (!streams[graph].isInitialized()) selectAudioFile();
+      break;
+    
+    case 'R': stream.restart(); break;
+    case 'M':
+      if (stream.isMuted()) stream.unmute();
+      else stream.mute();
+      break;
+    case '\n':
+      if (stream.isStreaming()) stream.stop();
+      else stream.start();
+      break;
+    case '<': stream.seekRelative(-2000); break;
+    case '>': stream.seekRelative(1000); break;
+    case '+':
+      is.coefPower += .1;
+      if (is.coefPower > 3f) is.coefPower = 3f;
+      break;
+    case '-':
+      is.coefPower -= .1;
+      if (is.coefPower < .1) is.coefPower = .1;
+      break;
+    
+    case 'Z': is.interpolation = !is.interpolation; break;
+    case 'X': is.logScaleFreq = !is.logScaleFreq; break;
+    case 'C': is.logScalePower = !is.logScalePower; break;
+    
+    default:
+      if (helpTime > 0) helpTime = 0;
+      else helpTime = millis();
   }
 }
 
