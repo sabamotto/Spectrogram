@@ -115,14 +115,18 @@ void drawSpectrogram() {
   is.load(stream.getFFT());
   
   int shei = (height-32)/2;
+  float prevFreqIndex = 0f;
   s.maxFreq = s.maxPeek = 0f;
   stroke(0); line(0.5f+s.time, shei*graph, 0.5f+s.time, shei*(graph+1));
   for (int i = 0; i < shei; ++i)
   {
     float freqRatio = (float)(i) / shei;
     float freqIndex = is.getIndex(freqRatio);
-    float power = is.getPower(freqIndex);
+    
     // MEMO: Strictly calculation, it should be an integrated power
+    //float power = is.getPower(freqIndex);
+    float power = is.getMaxPower(prevFreqIndex, freqIndex); // Peek
+    prevFreqIndex = freqIndex;
     
     color c = color(max(0, 360*power*power), 100, BRIGHTNESS_COEF*power);
     if (is.interpolation) {

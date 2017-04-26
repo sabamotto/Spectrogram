@@ -51,12 +51,41 @@ class InterpolatedSpectrum {
     }
     power *= this.coefPower;
     
-    if (this.logScalePower) {
-      //if (power <= 1) power = 0f; // enabled signal filter
-      return log(power) / log(this.maxPower);
-    } else {
-      return power / this.maxPower;
+    return this.convertPowerToLinOrLog(power);
+  }
+  
+  public float getMaxPower(float beginIndex, float endIndex) {
+    if (endIndex-beginIndex < 0) {
+      float tmp = beginIndex;
+      beginIndex = endIndex;
+      endIndex = tmp;
     }
+    
+    if (endIndex-beginIndex < 1f) {
+      return this.getPower(endIndex);
+    }
+    
+    float power = 0f;
+    int floorBeginIndex = floor(beginIndex);
+    if (beginIndex > floorBeginIndex) {
+      if (this.interpolation && floorBeginIndex < this.specSize*interpolateRange) {
+        // Lanczos-3 Interpolate
+        int bFil = floor(beginIndex) - 2;
+        if (bFil < 0) bFil = 0;
+        int eFil = bFil + 5;
+        if (eFil > this.specSize) eFil = this.specSize;
+        for (int i = bFil; i < eFil; ++i) {
+          power += this.spectrum[i] * lanczos3(beginIndex - i);
+        }
+      } else {
+        power = this.spectrum[floorBeginIndex];
+      }
+    }
+    for (int i = ceil(beginIndex); i < endIndex; i++) {
+      power = max(power, this.spectrum[i]);
+    }
+    
+    return this.convertPowerToLinOrLog(power);
   }
   
   public float getIndex(float g) {
@@ -97,5 +126,14 @@ class InterpolatedSpectrum {
   protected float lanczos3(float x) {
     if (x <= -3 || x >= 3) return 0f;
     else return sinc_PI(x) * sinc_PI(x/3);
+  }
+  
+  private float convertPowerToLinOrLog(float power) {
+    if (this.logScalePower) {
+      //if (power <= 1) power = 0f; // enabled signal filter
+      return log(power) / log(this.maxPower);
+    } else {
+      return power / this.maxPower;
+    }
   }
 }
